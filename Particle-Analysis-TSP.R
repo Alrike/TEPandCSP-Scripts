@@ -26,6 +26,7 @@ if(plugin_use){source("TEP_graphics_plugin.R")}
 #####################################first questions##########################
 #information about data and prior analysis
 magnification                   <- 200          # magnification used to take the pictures
+microscope                      <- "Axioscope"    # either Axioscope (Zeiss-old) or Axiolab (Zeiss-new)
 histvec                         <- seq(0,70, by=0.5) # vector defining the borders of the histogram bins, standard: seq(0,50, by=0.5)
 method_sizedis                  <- "AG_Engel_Standard" #either "Excel-Mastersheet" or "Mari&Kiorboe(1996)" or "zerotail_omit" or "AG_Engel_Standard"
                                                 #for information on methodological differences see pdf (or the function size_distribution)
@@ -51,7 +52,7 @@ savedir                  <-"/Users/lscheidemann/Documents/"  #directory to save 
 
 ####################################last intern preparations###########################
 #calculating/requesting input-consequences
-magniffactor<-obsarea(magnification)
+magniffactor<-obsarea(microscope, magnification)
 filters<-input$filter_ID
 
 #making the script more robust with regard to input format (no problem with treatments 1-3 etc)
