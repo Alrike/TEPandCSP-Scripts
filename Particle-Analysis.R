@@ -2,7 +2,8 @@
 #09.08.2018  Lindsay Scheidemann, slightly optimized 25.10, further optimised to be more user friendly 1.12.
 #adjusted to allow for empty blanks 25.02.2019, automated format recognition 04.03.2019
 #TEP-carbon content, more flexible histogram-data and optimization for increased user-friendliness 07-11.08.2019,
-#changes in size_distribution methods until 23.08., 12.11.2019, 21.07.2020 minor bug fixes ,15.08.2020 add stats to output
+#changes in size_distribution methods until 23.08., 12.11.2019, 21.07.2020 minor bug fixes ,15.08.2020 add stats to output,
+#26.10.2023 adding the new microscope
 
 #reading the TEP- and CSP-analysis output from imageJ and analysing the data, may be used for other particles as well
 
@@ -26,6 +27,7 @@ if(plugin_use){source("TEP_graphics_plugin.R")}
 #####################################first questions##########################
 #information about data and prior analysis
 magnification                   <- 200          # magnification used to take the pictures
+microscope                      <- "Axioscope"    # either Axioscope (Zeiss-old) or Axiolab (Zeiss-new) 
 histvec                         <- seq(0,70, by=0.5) # vector defining the borders of the histogram bins, standard: seq(0,50, by=0.5)
 method_sizedis                  <- "AG_Engel_Standard" #either "Excel-Mastersheet" or "Mari&Kiorboe(1996)" or "zerotail_omit" or "AG_Engel_Standard"
                                                 #for information on methodological differences see pdf (or the function size_distribution)
@@ -51,7 +53,7 @@ savedir                  <-"/Users/lscheidemann/Desktop/TSP-tests3-5/"  #directo
 
 ####################################last intern preparations###########################
 #calculating/requesting input-consequences
-magniffactor<-obsarea(magnification)
+magniffactor<-obsarea(microscope, magnification)
 filters<-input$filter_ID
 
 #making the script more robust with regard to input format (no problem with treatments 1-3 etc)
