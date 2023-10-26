@@ -5,7 +5,7 @@
 
 #contains the functions:
 #individual analysis (indan)
-#observed area (obsarea)  [per photograph!!!]
+#observed area (obsarea)  [per photograph!!!], can now do both microscopes
 #size distribution (size_distribution) 
 #add to masterhist (addto_masterhist)
 #calculate carboncontent (calc_Ccontent)
@@ -18,13 +18,25 @@ indan<-function(TEP_Data)  #19.08.2018
   return(TEP_Data)
 }
 
-obsarea<-function(magnification)   #25.10.2018
+obsarea<-function(microscope, magnification)   #25.10.2018
 {
-  if (!(magnification %in% c(100, 200, 400, 1000))) {print("Magnification not known!")}
-  if (magnification==100){magniffactor=865*648}
-  if (magnification==200){magniffactor=436*327}
-  if (magnification==400){magniffactor=218*163}
-  if (magnification==1000){magniffactor=87.2*65.3}         #14.8.19
+  if(!microscope %in%c("Axioscope", "Axiolab")) {print("Unknown Microscope!")} #26.10.23
+  if(microscope == "Axioscope")
+     {
+        if (!(magnification %in% c(100, 200, 400, 1000))) {print("Magnification not known!")}
+        if (magnification==100){magniffactor=865*648}  #image in um
+        if (magnification==200){magniffactor=436*327}
+        if (magnification==400){magniffactor=218*163}
+        if (magnification==1000){magniffactor=87.2*65.3}         #14.8.19
+       }
+     if (microscope == "Axiolab") #26.10.23
+       {
+       if (!magnification %in% c(100, 200, 400, 630)) {print("Magnification not known!")}
+       if (magnification==100){magniffactor=1421*799}
+       if (magnification==200){magniffactor=715*402}
+       if (magnification==400){magniffactor=355*200}
+       if (magnification==630){magniffactor=226*127} 
+       }
   return(magniffactor)
 }
 
