@@ -9,10 +9,11 @@
 #size distribution (size_distribution) 
 #add to masterhist (addto_masterhist)
 #calculate carboncontent (calc_Ccontent)
-#save Excel(output)-file (savexls)
+#save Excel(output)-file (savexls) 
 
 indan<-function(TEP_Data)  #19.08.2018
 {
+  if(!"Area" %in% names(TEP_Data)) {stop("Input has no column named Area!")}
   TEP_Data$`ESD[um]`<-sqrt(TEP_Data$Area/pi)*2
   TEP_Data$`ESV[um^3]`<-(4/3)*pi*((TEP_Data$`ESD[um]`/2)^3)
   return(TEP_Data)
@@ -20,10 +21,10 @@ indan<-function(TEP_Data)  #19.08.2018
 
 obsarea<-function(microscope, magnification)   #25.10.2018
 {
-  if(!microscope %in%c("Axioscope", "Axiolab")) {print("Unknown Microscope!")} #26.10.23
+  if(!microscope %in%c("Axioscope", "Axiolab")) {stop("Unknown Microscope!")} #26.10.23
   if(microscope == "Axioscope")
      {
-        if (!(magnification %in% c(100, 200, 400, 1000))) {print("Magnification not known!")}
+        if (!(magnification %in% c(100, 200, 400, 1000))) {stop("Magnification not known!")}
         if (magnification==100){magniffactor=865*648}  #image in um
         if (magnification==200){magniffactor=436*327}
         if (magnification==400){magniffactor=218*163}
@@ -31,7 +32,7 @@ obsarea<-function(microscope, magnification)   #25.10.2018
        }
      if (microscope == "Axiolab") #26.10.23
        {
-       if (!magnification %in% c(100, 200, 400, 630)) {print("Magnification not known!")}
+       if (!magnification %in% c(100, 200, 400, 630)) {stop("Magnification not known!")}
        if (magnification==100){magniffactor=1421*799}
        if (magnification==200){magniffactor=715*402}
        if (magnification==400){magniffactor=355*200}
@@ -42,12 +43,14 @@ obsarea<-function(microscope, magnification)   #25.10.2018
 
 size_distribution<-function(hists, method_sizedis, ...)  #15.8.19
 {
+  if(!is.list(hists)){stop("input histogram is not a list")}
+  if(!("counts"%in%names(hists)&"mids"%in%names(hists))){stop("function size_distribution requires a histogram with elements mids and counts")}
   histdata<-data.frame(mids=hists$mids, counts=hists$counts)
   if (!method_sizedis %in% c("Excel-Mastersheet", "Mari&Kiorboe(1996)", "zerotail_omit", "AG_Engel_Standard"))
   {
     method_sizedis="AG_Engel_Standard"
-    cat("Method not known!!, Check spelling, use a different one or add to the function, please",
-        "\n", "Size distribution parameters are calculated by method: 'AG_Engel_Standard'", "\n")
+    warning("Method not known!!, Check spelling, use a different one or add to the function, please",
+        "\n", "Size distribution parameters are calculated by method: 'AG_Engel_Standard'")
   }
   if (method_sizedis=="Excel-Mastersheet")
   {
@@ -64,7 +67,7 @@ size_distribution<-function(hists, method_sizedis, ...)  #15.8.19
   
   if (method_sizedis=="Mari&Kiorboe(1996)")
   {
-    histdata<-subset(x=histdata, subset=histdata$mids > 3)      # may be underrepresented due to flexible character
+    histdata<-subset(x=histdata, subset=histdata$mids > 3)        # may be underrepresented due to flexible character
                                                                   # and are difficult to enumerate at 250x
     histdata<-subset(x=histdata, subset=histdata$mids < 40)       # bad counting statistics
     intdata<-data.frame(countslog=log10(histdata$counts + 0.001), # because log10(0)=>ERROR!!!
@@ -81,19 +84,21 @@ size_distribution<-function(hists, method_sizedis, ...)  #15.8.19
     histdata<-subset(x=histdata, subset=histdata$mids > 3) #I trust reasoning and experience of the paper authors
     zerocount<-0
     rowcount<-1
-    while(zerocount<3)              # this spots the point in the data, 
+    while(zerocount<3 & rowcount<=length(histdata$mids))              # this spots the point in the data, 
     {                               # where the last three counts in a row were 0
       #cat(rowcount, "\t", zerocount, "\n") #to check wether this works, debugging only
       if(histdata$counts[rowcount]==0)
       {zerocount=zerocount+1}else
       {zerocount=0}
       rowcount=rowcount+1
+      if(rowcount==length(histdata$mids)){break}
     }
     histdata<-histdata[1:(rowcount),] #the three zeros in a row are included in the data (!!)
     intdata<-data.frame(countslog=log10(histdata$counts + 0.001), # because log10(0)=>ERROR!!!
                         classmidslog=log10(histdata$mids))        #actually useless, because the prevous loop takes at least the three zeros
     if (length(intdata$countslog)<3)                              #regression with less than three data points would be random
     {
+      warning("Not enough suitable sizeclasses for size distribution")
       slope        <-NA                                           #so NAs are assigned (similar to empty blanks)
       intercept    <-NA
       nreg_points  <-length(intdata$countslog)
@@ -120,6 +125,7 @@ size_distribution<-function(hists, method_sizedis, ...)  #15.8.19
                         classmidslog=log10(histdata$mids)) 
     if (length(intdata$countslog)<3)                                #regression with less than three data points would be random
     {
+      warning("Not enough suitable sizeclasses for size distribution")
       slope        <-NA                                             #so NAs are assigned (similar to empty blanks)
       intercept    <-NA
       nreg_points  <-length(intdata$countslog)
@@ -145,16 +151,22 @@ size_distribution<-function(hists, method_sizedis, ...)  #15.8.19
               pvalue=pvalue, rsquared=rsquared, adj_rsquared=adj_rsquared))
 }
 
-addto_masterhist<-function(filter_ID, hists, masterhist, isEmpty) #10.08.2019
+addto_masterhist<-function(filter_ID, hists=NA, masterhist=NA, isEmpty=NA) #10.08.2019
 {
+  if(is.na(isEmpty)){stop("isEmpty needs to be either TRUE or FALSE")}
   if (isEmpty)
   {
+    if(is.list(hists)){warning("input-histogram is being ignored with isEmpty=TRUE")}
     assign(paste(as.name(filter_ID)),rep(0, length(masterhist$mids)))
     histdata<-data.frame(mids=masterhist$mids, eval(as.name(filter_ID)))
     names(histdata)<-c("mids", paste(filter_ID))
     masterhist<-merge(masterhist, histdata, by="mids")
   }else
   {
+    if(!is.list(hists)){stop("No data to add to histogram")}
+    if(!is.list(masterhist)){stop("No histogram to add data to")}
+    if(!all(hists$mids==masterhist$mids)){stop("histogram doesn't match structure of masterhist")}
+    
     assign(paste(as.name(filter_ID)),hists$counts)
     histdata<-data.frame(mids=hists$mids, eval(as.name(filter_ID)))
     names(histdata)<-c("mids", paste(filter_ID))
@@ -165,6 +177,10 @@ addto_masterhist<-function(filter_ID, hists, masterhist, isEmpty) #10.08.2019
 
 calc_Ccontent<-function(masterhist) #10.08.2019, formula: Mari (1999), title see header
 {
+  if(!is.data.frame(masterhist)){stop("input is not a dataframe")}
+  if(!names(masterhist)[1]=="mids"){stop("input is missing mids column in first position")}
+  if(length(names(masterhist))==1){stop("input has no data")}
+     
   carboncontentvec=c("Carboncontent [ug] (observed)", rep(NA, ncol(masterhist)-1))
   for (k in 2:ncol(masterhist)) #first column is mids => no carboncontent of mids!
   {
@@ -178,13 +194,15 @@ calc_Ccontent<-function(masterhist) #10.08.2019, formula: Mari (1999), title see
     }
     carboncontentvec[k]<-carboncontent
   }
-  masterhist<-rbind(masterhist, Ccontent=carboncontentvec) #can't say wy it needs a name, 
+  masterhist<-rbind(masterhist, Ccontent=carboncontentvec) #can't say why it needs a name, 
                                                            #that isn't used, spooky codeline!!!
   return(masterhist)
 }
 
-save_xls<-function(results, filename, decimal_seperator)
+#current version does not need decimal separator, left in to allow for downwards compatability
+save_xls<-function(results, filename, decimal_seperator) #no tests
 {
+  library(openxlsx2)
   #reset the names to be more informative/beautiful, 
   #but less practical to work with, therefore only done for saving the file 
   #to work with other programs and human inspection
@@ -199,8 +217,12 @@ save_xls<-function(results, filename, decimal_seperator)
   names(results)[names(results) == "adj_r2"]           <- "adjusted r^2 (linear regression)"
   names(results)[names(results) == "r2_slope"]         <- "r^2 (linear regression)"
   
+  #saving file as true-Excel
+  write.xlsx(results, filename, asTable = TRUE)
+  
+  #old code, in case the result is not supposed to be an Excel
   #saving the file
-  write.table(results, file=filename, 
-              sep="\t", dec=decimal_seperator,
-              row.names = F, col.names = T)
+  # write.table(results, file=filename, 
+  #             sep="\t", dec=decimal_seperator,
+  #             row.names = F, col.names = T)
 }

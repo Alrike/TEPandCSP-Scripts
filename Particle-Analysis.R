@@ -9,7 +9,7 @@
 
 #getting started
 #required: 
-#library: readxl
+#library: readxl, openxlsx for saving of file
 #additional scripts: TEP-Functions.R (functions: indan, obsarea, size_distribution, addto_masterhist, Calc_Ccontent, savexls)
 #formula for calculation from Excel-mastersheet, Carolina, Mari (1999)
 #thanks for debugging help and formula checking: Carolina(v0.3), Makcim
@@ -191,7 +191,7 @@ if (particletype=="TEP")
     (picvec*magniffactor*(Volume_ml_vec/1000))
   masterhist<-rbind(masterhist, Ccontent=c("Carboncontent [ug/l]", Ccontent_per_l))
 }
-testdf<-masterhist #for debugging
+#testdf<-masterhist #for debugging
 #########################combining all results#########################
 #take the dataframe with the histogram results and add them to the results
 masterhist<-t(masterhist)                                            #transpone masterhist, so the orientations match
