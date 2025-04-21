@@ -1,7 +1,7 @@
 #!/usr/bin/R
 #19.08.2018  Lindsay Scheidemann
 #functions for analysing the TEP-data
-#for use in Analysis.R
+#for use in Particle-Analysis.R (Version 2.0.0) or independently
 
 #contains the functions:
 #individual analysis (indan)
@@ -203,22 +203,24 @@ calc_Ccontent<-function(masterhist) #10.08.2019, formula: Mari (1999), title see
 save_xls<-function(results, filename, decimal_seperator) #no tests
 {
   library(openxlsx2)
-  #reset the names to be more informative/beautiful, 
-  #but less practical to work with, therefore only done for saving the file 
-  #to work with other programs and human inspection
-  names(results)[names(results) == "Number_Particles"] <- "Number of Particles (observed)"
-  names(results)[names(results) == "Volume"]           <- "filtered Volume [ml]"
-  names(results)[names(results) == "picnum"]           <- "Number of Pictures taken [per filter]"
-  names(results)[names(results) == "Number.l"]         <- "Number of particles [*10^6/Liter]"
-  names(results)[names(results) == "Area"]             <- "Area of Particles (observed)"
-  names(results)[names(results) == "Area.l"]           <- "Area of Particles [cm^2/Liter]"
-  names(results)[names(results) == "nreg_points"]      <- "Number of count data points included into the regression for size distribution"
-  names(results)[names(results) == "pvalueslope"]      <- "p-value (linear regression)"
-  names(results)[names(results) == "adj_r2"]           <- "adjusted r^2 (linear regression)"
-  names(results)[names(results) == "r2_slope"]         <- "r^2 (linear regression)"
+  if("Area.l" %in%names(results)){
+    #reset the names to be more informative/beautiful, 
+    #but less practical to work with, therefore only done for saving the file 
+    #to work with other programs and human inspection
+    names(results)[names(results) == "Number_Particles"] <- "Number of Particles (observed)"
+    names(results)[names(results) == "Volume"]           <- "filtered Volume [ml]"
+    names(results)[names(results) == "picnum"]           <- "Number of Pictures taken [per filter]"
+    names(results)[names(results) == "Number.l"]         <- "Number of particles [*10^6/Liter]"
+    names(results)[names(results) == "Area"]             <- "Area of Particles (observed)"
+    names(results)[names(results) == "Area.l"]           <- "Area of Particles [cm^2/Liter]"
+    names(results)[names(results) == "nreg_points"]      <- "Number of count data points included into the regression for size distribution"
+    names(results)[names(results) == "pvalueslope"]      <- "p-value (linear regression)"
+    names(results)[names(results) == "adj_r2"]           <- "adjusted r^2 (linear regression)"
+    names(results)[names(results) == "r2_slope"]         <- "r^2 (linear regression)"  
+  }
   
   #saving file as true-Excel
-  write.xlsx(results, filename, asTable = TRUE)
+  write_xlsx(results, filename, asTable = TRUE)
   
   #old code, in case the result is not supposed to be an Excel
   #saving the file

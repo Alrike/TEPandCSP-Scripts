@@ -1,21 +1,25 @@
 #!/usr/bin/R
-#09.08.2018  Lindsay Scheidemann, slightly optimized 25.10, further optimised to be more user friendly 1.12.
-#adjusted to allow for empty blanks 25.02.2019, automated format recognition 04.03.2019
-#TEP-carbon content, more flexible histogram-data and optimization for increased user-friendliness 07-11.08.2019,
-#changes in size_distribution methods until 23.08., 12.11.2019, 21.07.2020 minor bug fixes ,15.08.2020 add stats to output,
-#26.10.2023 adding the new microscope
+#Version 2.0.0
 
 #reading the TEP- and CSP-analysis output from imageJ and analysing the data, may be used for other particles as well
 
 #getting started
 #required: 
-#library: readxl, openxlsx for saving of file
-#additional scripts: TEP-Functions.R (functions: indan, obsarea, size_distribution, addto_masterhist, Calc_Ccontent, savexls)
-#formula for calculation from Excel-mastersheet, Carolina, Mari (1999)
-#thanks for debugging help and formula checking: Carolina(v0.3), Makcim
+#packages: readxl, openxlsx for saving of file
+
+#additional scripts: 
+#TEP-Functions.R (functions: indan, obsarea, size_distribution, addto_masterhist, Calc_Ccontent, savexls), 
+#TEP-graphics-plugin.R (overwrites function size_distribution to add plots to its output)
+
+#Tests: 
+# Unit Tests for functions in tests_TEP_Functions.R
+# End-to-End Tests for Script in tests_Particle_Analysis.RS
+
+#formulas for calculation from Excel-mastersheet, Carolina, Mari (1999)
+#thanks for debugging help and formula checking: Carolina(v 0.3), Makcim(v 1)
 
 #reading all the necessary information, preparing for work/script setup
-scriptloc<-"C:/Users/lscheidemann/Desktop/Dokumrnte/imageJ-stuff"   #script location
+scriptloc<-"C:/Users/linds/Documents/GitHub/TEPandCSP-Scripts/"   #script location
 setwd(scriptloc)
 source("TEP-Functions.R")                        #script defining some extra-functions necessary to run
                                                  #this contains the functions: individual analysis (indan)
@@ -37,19 +41,19 @@ method_sizedis                  <- "AG_Engel_Standard" #either "Excel-Mastershee
 #about the filters for analysis
 particletype                    <- "TEP"        #"TEP", "CSP", or "OTHER", so far only specialised output for TEP,
                                                 # feel free to add other types and/or analyses
-filterdir<-"C:/Users/lscheidemann/Desktop/Labplas-Elbe2023/Alkor586/CSPs-586/"       #place where the "filters" are stored/directory with imageJ results
-tabledir<-"C:/Users/lscheidemann/Desktop/Labplas-Elbe2023/Alkor586/"              #directory with input-table
+filterdir<-"C:/Users/linds/Documents/GitHub/TEPandCSP-Scripts/Testfiles/"       #place where the "filters" are stored/directory with imageJ results
+tabledir<-"C:/Users/linds/Documents/GitHub/TEPandCSP-Scripts/Testfiles/"              #directory with input-table
 setwd(tabledir)
-#input<-read_excel("Input_TEP_2.xlsx", col_names=TRUE, n_max=12) #files listed in csv, tsv or "fake"-xls
-input<-read_excel("Alkor586-input.xlsx", sheet="CSPs", col_names=TRUE)
+
+input<-read_excel("Test-input.xls", sheet="Testdata", col_names=TRUE)
 ##################################script output questions###########################
 #preparing for output of information into a file
-plotresults              <-TRUE                     #plots boxplots for area/l and particles/l and slope, 
+plotresults              <-FALSE                     #plots boxplots for area/l and particles/l and slope, 
                                                  #if it is TRUE, only useful for small number of treatments
-saveresults              <-TRUE                    #saves results in a tsv formatted excel, if it is TRUE
+saveresults              <-FALSE                    #saves results in a tsv formatted excel, if it is TRUE
 decimal_seperator        <-","                   # depending on your Excel 2,1 (",") might be more useful than 2.1("."), or the other way round
-filename                 <-"TSP-tests-CSP.xls"        #output filename
-savedir                  <-"/Users/lscheidemann/Desktop/TSP-tests3-5/"  #directory to save output in
+filename                 <-"Test.xlsx"        #output filename
+savedir                  <-"C:/Users/linds/Documents/GitHub/TEPandCSP-Scripts/Testfiles/"  #directory to save output in
 
 ####################################last intern preparations###########################
 #calculating/requesting input-consequences
@@ -191,17 +195,41 @@ if (particletype=="TEP")
     (picvec*magniffactor*(Volume_ml_vec/1000))
   masterhist<-rbind(masterhist, Ccontent=c("Carboncontent [ug/l]", Ccontent_per_l))
 }
+
 #testdf<-masterhist #for debugging
 #########################combining all results#########################
 #take the dataframe with the histogram results and add them to the results
 masterhist<-t(masterhist)                                            #transpone masterhist, so the orientations match
 colnames(masterhist)<-masterhist[1,]                                 #make the mid-counts the column names (so these are meaningful)
 masterhist=masterhist[!row.names(masterhist) %in% c("mids"),]        #remove the mid-counts row, since it is no longer necessary and will interfere with the merge function
-masterhist<-cbind(Filter_ID=rownames(masterhist), masterhist)        #create a column with the filternames (which are now rownames), because merge won't work otherwise
-results<-merge(results, masterhist, by="Filter_ID")                  #finally merge the tables by the Filter_IDs, the positions should be the same in both tables, but I still prefer merge to cbind, 
-                                                                     #because it will correct and adjust, if they don't, while cbind doesn't even give a warning
+masterhist<-cbind(Filter_ID_hist=rownames(masterhist), masterhist)   #create a column with the filternames (which are now rownames), because merge won't work otherwise
+rownames(masterhist)<-NULL                                           #delete rownames of masterhist, as they can cause odd behaviour
+results<-cbind(results, masterhist)                                  #combine the two datatables
+colnum<-which(colnames(results)=="Filter_ID_hist")                    # 17 unless columns have been added to the dataframe
+
+if(all(results$Filter_ID==results$Filter_ID_hist)){                  #double-check: are the data combined correctly?
+  results<-results[,-colnum]                                         #remove double column if positive
+}else{
+  results<-intdata2<-results[,1:(colnum-1)]                          #remove masterhist from result-table if check fails
+  warning("Combining the dataframes has failed! The size distribution is exported individually")
+  if (saveresults)
+  {
+    setwd(savedir)
+    substrings[1]<-strsplit(filename, split=".", fixed=TRUE)          #separate filename from ending
+    names(substrings)<-"string"                                       #give the list content a name for easier access
+    newfile<-paste(substrings$string[1], "-histogram.", substrings$string[2], sep="") #insert "-histogram" into the file name
+    save_xls(masterhist, newfile, decimal_seperator)                  #save the histogram
+  }
+}
+
 if(particletype == "TEP") {
-  results$`Carboncontent [ug/l]`<-Ccontent_per_l
+  if(length(names(results))>colnum){
+    results$`Carboncontent [ug/l]`<-Ccontent_per_l  
+  }else{
+    masterhist<-as.data.frame(masterhist)
+    masterhist$`Carboncontent [ug/l]`<-Ccontent_per_l
+  }
+  
 }
 
 rm(count)
@@ -211,7 +239,7 @@ if (saveresults)
   setwd(savedir)
   save_xls(results=results, filename=filename,  
             decimal_seperator=decimal_seperator)
-  print("Thanks for your patience! Your Excel is now available")
+  print("Thanks for your patience! Your Excel is now available :)")
 }
 
 setwd(scriptloc)                             #set working directory back to location

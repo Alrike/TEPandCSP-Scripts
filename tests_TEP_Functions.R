@@ -1,6 +1,6 @@
 #!/usr/bin/R
 #18.04.2025  Alrike
-#Tests for TEP-Functions.R
+#Unit-Tests for TEP-Functions.R und TEP-graphics-plugin.R
 
 
 #requires library:testthat
