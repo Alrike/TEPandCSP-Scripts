@@ -41,7 +41,7 @@ obsarea<-function(microscope, magnification)   #25.10.2018
   return(magniffactor)
 }
 
-size_distribution<-function(hists, method_sizedis, ...)  #15.8.19
+size_distribution<-function(hists, method_sizedis, name)  #15.8.19
 {
   if(!is.list(hists)){stop("input histogram is not a list")}
   if(!("counts"%in%names(hists)&"mids"%in%names(hists))){stop("function size_distribution requires a histogram with elements mids and counts")}
@@ -98,7 +98,7 @@ size_distribution<-function(hists, method_sizedis, ...)  #15.8.19
                         classmidslog=log10(histdata$mids))        #actually useless, because the prevous loop takes at least the three zeros
     if (length(intdata$countslog)<3)                              #regression with less than three data points would be random
     {
-      warning("Not enough suitable sizeclasses for size distribution")
+      warning("Not enough suitable sizeclasses for size distribution for filter: ", name)
       slope        <-NA                                           #so NAs are assigned (similar to empty blanks)
       intercept    <-NA
       nreg_points  <-length(intdata$countslog)
@@ -125,7 +125,7 @@ size_distribution<-function(hists, method_sizedis, ...)  #15.8.19
                         classmidslog=log10(histdata$mids)) 
     if (length(intdata$countslog)<3)                                #regression with less than three data points would be random
     {
-      warning("Not enough suitable sizeclasses for size distribution")
+      warning("Not enough suitable sizeclasses for size distribution for filter: ", name)
       slope        <-NA                                             #so NAs are assigned (similar to empty blanks)
       intercept    <-NA
       nreg_points  <-length(intdata$countslog)

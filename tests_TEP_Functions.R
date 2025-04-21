@@ -50,29 +50,29 @@ test_that("obsarea, invalid arguments", {
 test_that("size_distribution, happy path", {
   testhist<-hist(c(rep(1,10),rep(2,20),rep(3,15),rep(4,12),rep(5,5), rep(6,0)), 
                  breaks=0:6)
-  result<-size_distribution(testhist, "Excel-Mastersheet")
+  result<-size_distribution(testhist, "Excel-Mastersheet", "Test")
   expect_equal(result$nreg_points, 6)
   expect_equal(round(result$slope,2), -0.99)
   expect_equal(round(result$intercept,2), 1.35)
   
-  result<-size_distribution(testhist, "Mari&Kiorboe(1996)")
+  result<-size_distribution(testhist, "Mari&Kiorboe(1996)", "Test")
   expect_equal(result$nreg_points, 3)
   expect_equal(round(result$slope,2), -5,41)
   expect_equal(round(result$intercept,2), 4.09)
   
-  result<-size_distribution(testhist, "zerotail_omit")
+  result<-size_distribution(testhist, "zerotail_omit", "Test")
   expect_equal(result$nreg_points, 3)
   expect_equal(round(result$slope,2), -5,41)
   expect_equal(round(result$intercept,2), 4.09)
   
   testhist<-hist(c(rep(1,10),rep(2,20),rep(3,15),rep(4,12),rep(5,5), rep(6,0)), 
                  breaks=0:10)
-  result<-size_distribution(testhist, "zerotail_omit")
+  result<-size_distribution(testhist, "zerotail_omit", "Test")
   expect_equal(result$nreg_points, 6)
   expect_equal(round(result$slope,2), -2,97)
   expect_equal(round(result$intercept,2), 2.55)
   
-  result<-size_distribution(testhist, "AG_Engel_Standard")
+  result<-size_distribution(testhist, "AG_Engel_Standard", "Test")
   expect_equal(result$nreg_points, 3)
   expect_equal(round(result$slope,2), -0.60)
   expect_equal(round(result$intercept,2), 1.41)
@@ -80,20 +80,20 @@ test_that("size_distribution, happy path", {
 
 test_that("size_distribution, no calculation sensible", {
   testhist<-hist(c(rep(1,10),rep(2,20)))
-  expect_warning(size_distribution(testhist, "zerotail_omit"),
-                 "Not enough suitable sizeclasses for size distribution")
-  expect_warning(size_distribution(testhist, "AG_Engel_Standard"),
-                 "Not enough suitable sizeclasses for size distribution")
-  expect_warning(size_distribution(testhist, "some_method"))
+  expect_warning(size_distribution(testhist, "zerotail_omit", "Test"),
+                 "Not enough suitable sizeclasses for size distribution for filter: Test")
+  expect_warning(size_distribution(testhist, "AG_Engel_Standard", "Test"),
+                 "Not enough suitable sizeclasses for size distribution for filter: Test")
+  expect_warning(size_distribution(testhist, "some_method", "Test"))
   
 })
 
 test_that("size_distribution, invalid arguments", {
   testhist<-list(content=c(1,1), mids=c(12,3))
-  expect_error(size_distribution(testhist, "AG_Engel_Standard"),
+  expect_error(size_distribution(testhist, "AG_Engel_Standard", "Test"),
                  "function size_distribution requires a histogram with elements mids and count")
   testhist<-list(content=c(1,1), mids=c(12,3))
-  expect_error(size_distribution(c(1,2), "Excel-Mastersheet"),
+  expect_error(size_distribution(c(1,2), "Excel-Mastersheet", "Test"),
                "input histogram is not a list")
   
 })

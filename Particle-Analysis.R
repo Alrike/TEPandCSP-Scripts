@@ -64,6 +64,9 @@ filters<-input$filter_ID
 input$filename      <-   as.character(input$filename)
 input$treatment     <-   as.character(input$treatment)
 
+#last check of inputtable
+  if(length(unique(input$filter_ID))<length(input$filter_ID)){stop("Sample names are not unique! Please ensure no name occurs twice")}
+
 ######################################### Analysis #########################################################
 #writing the overall dataframe
 results<-data.frame(Filter_ID=filters, 
@@ -90,7 +93,7 @@ for(i in filters)      #for loop across the filters
   
 if (is.na(input$filename[input$filter_ID==i])) #set particles to 0 manually, if no file, good blanks(!!)
   {
-  print("No particles on filter?")     #reminder, in case the user forgot to enter a filename
+  cat("No particles on filter? \n" )     #reminder, in case the user forgot to enter a filename
   #set observed parameters to 0
     results$Number_Particles[results$Filter_ID==i]   <- 0
     results$Area[results$Filter_ID==i]               <- 0
@@ -121,7 +124,7 @@ if (is.na(input$filename[input$filter_ID==i])) #set particles to 0 manually, if 
     #reading the file based on the ending (or give a more informative output)
     if(!fileending %in% c("csv", "tsv", "xls"))
     {
-      print("Format not known!! Please teach me how to read this one!")
+      stop("Format not known!! Please teach me how to read this one!")
       }
     if(fileending=="csv")
     {
