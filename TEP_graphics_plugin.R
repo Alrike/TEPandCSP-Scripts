@@ -6,9 +6,13 @@
 
 #contains the functions:
 #size distribution (size_distribution) #extended version with graphs
+#calc_Ccontent_sizecalculates the individual carbon content for every particle on a filter
+  #function iscurrently deprecated and therefore not tested
 
 size_distribution<-function(hists, method_sizedis, filter_ID)  #15.8.19
 {
+  if(!is.list(hists)){stop("input histogram is not a list")}
+  if(!("counts"%in%names(hists)&"mids"%in%names(hists))){stop("function size_distribution requires a histogram with elements mids and counts")}
   histdata<-data.frame(mids=hists$mids, counts=hists$counts)
   
   histdataint<-subset(histdata, histdata$counts>0)    
@@ -53,19 +57,21 @@ size_distribution<-function(hists, method_sizedis, filter_ID)  #15.8.19
     histdata<-subset(x=histdata, subset=histdata$mids > 3) #I trust reasoning and experience of the paper authors
     zerocount<-0
     rowcount<-1
-    while(zerocount<3)              # this spots the point in the data, 
+    while(zerocount<3 & rowcount<=length(histdata$mids))              # this spots the point in the data, 
     {                               # where the last three counts in a row were 0
       #cat(rowcount, "\t", zerocount, "\n") #to check wether this works, debugging only
       if(histdata$counts[rowcount]==0)
       {zerocount=zerocount+1}else
       {zerocount=0}
       rowcount=rowcount+1
+      if(rowcount==length(histdata$mids)){break}
     }
     histdata<-histdata[1:(rowcount),] #the three zeros in a row are included in the data (!!)
     intdata<-data.frame(countslog=log10(histdata$counts + 0.001), # because log10(0)=>ERROR!!!
                         classmidslog=log10(histdata$mids))        #actually useless, because the prevous loop takes at least the three zeros
     if (length(intdata$countslog)<3)                              #regression with less than three data points would be random
     {
+      warning("Not enough suitable sizeclasses for size distribution for filter: ", filter_ID)
       slope        <-NA                                           #so NAs are assigned (similar to empty blanks)
       intercept    <-NA
       nreg_points  <-length(intdata$countslog)
@@ -92,6 +98,7 @@ size_distribution<-function(hists, method_sizedis, filter_ID)  #15.8.19
                         classmidslog=log10(histdata$mids)) 
     if (length(intdata$countslog)<3)                                #regression with less than three data points would be random
     {
+      warning("Not enough suitable sizeclasses for size distribution for filter: ", filter_ID)
       slope        <-NA                                             #so NAs are assigned (similar to empty blanks)
       intercept    <-NA
       nreg_points  <-length(intdata$countslog)
@@ -131,6 +138,7 @@ size_distribution<-function(hists, method_sizedis, filter_ID)  #15.8.19
               pvalue=pvalue, rsquared=rsquared, adj_rsquared=adj_rsquared))
 }
 
+#deprecated no tests: if required please contact me or check yourself
 calc_Ccontent_size <- function(Filter_ID, TEP_data, Ccontent_classvec, 
                                Ccontent_master, count, isEmpty)
 {
@@ -169,7 +177,7 @@ calc_Ccontent_size <- function(Filter_ID, TEP_data, Ccontent_classvec,
                              eval(as.name(Filter_ID)))
       names(Ccontent_master)<-c("mids", paste(Filter_ID))
     } else
-    {#the carboncontent is called counts for compatibility with addro_masterhist
+    {#the carboncontent is called counts for compatibility with addto_masterhist
       Ccontent_int <- data.frame(mids=Ccontent_classvec[-1],
                                  counts=Ccontent_vec)
       Ccontent_master<-addto_masterhist(filter_ID=Filter_ID, hists=Ccontent_int,
